@@ -8,43 +8,43 @@ import sys
 
 def handle_response(response, display=False):
     """
-        Dispatch response based on scripting response or event.
+    Dispatch response based on scripting response or event.
     """
 
     def handle_script_response(response, display=False):
         if display:
             sys.stderr.write(
-                u'Scripting request submitted with request id: {}\n'.format(
-                    response.operation_id))
+                f"Scripting request submitted with request id: {response.operation_id}\n"
+            )
 
     def handle_script_plan_notification(response, display=False):
         if display:
             sys.stderr.write(
-                u'Scripting request: {} plan: {} database objects\n'.format(
-                    response.operation_id, response.count))
+                f"Scripting request: {response.operation_id} plan: {response.count} database objects\n"
+            )
 
     def handle_script_progress_notification(response, display=False):
         if display:
             sys.stderr.write(
-                u'Scripting progress: Status: {} Progress: {} out of {} objects scripted\n'.format(
-                    response.status, response.completed_count, response.total_count))
+                f"Scripting progress: Status: {response.status} Progress: {response.completed_count} out of {response.total_count} objects scripted\n"
+            )
 
     def handle_script_complete(response, display=False):
         if response.has_error:
             # Always display error messages.
             sys.stdout.write(
-                u'Scripting request: {} encountered error: {}\n'.format(
-                    response.operation_id, response.error_message))
-            sys.stdout.write(u'Error details: {}\n'.format(response.error_details))
+                f"Scripting request: {response.operation_id} encountered error: {response.error_message}\n"
+            )
+            sys.stdout.write(f"Error details: {response.error_details}\n")
         elif display:
-            sys.stderr.write(
-                u'Scripting request: {} completed\n'.format(response.operation_id))
+            sys.stderr.write(f"Scripting request: {response.operation_id} completed\n")
 
     response_handlers = {
-        u'ScriptResponse': handle_script_response,
-        u'ScriptPlanNotificationEvent': handle_script_plan_notification,
-        u'ScriptProgressNotificationEvent': handle_script_progress_notification,
-        u'ScriptCompleteEvent': handle_script_complete}
+        "ScriptResponse": handle_script_response,
+        "ScriptPlanNotificationEvent": handle_script_plan_notification,
+        "ScriptProgressNotificationEvent": handle_script_progress_notification,
+        "ScriptCompleteEvent": handle_script_complete,
+    }
 
     response_name = type(response).__name__
 

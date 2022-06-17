@@ -8,36 +8,40 @@ import os
 import time
 import unittest
 
-import mssqlscripter.jsonrpc.jsonrpcclient as json_rpc_client
 import mssqlscripter.jsonrpc.contracts.scriptingservice as scripting
+import mssqlscripter.jsonrpc.jsonrpcclient as json_rpc_client
 
 
 class ScriptingRequestTests(unittest.TestCase):
     """
-        Scripting request tests.
+    Scripting request tests.
     """
 
     def test_succesful_scripting_response_AdventureWorks2014(self):
         """
-            Verifies that the scripting response of a successful request is read succesfully with a sample request against AdventureWorks2014.
+        Verifies that the scripting response of a successful request is read succesfully with a sample request against AdventureWorks2014.
         """
-        with open(self.get_test_baseline(u'adventureworks2014_baseline.txt'), u'r+b', buffering=0) as response_file:
+        with open(
+            self.get_test_baseline("adventureworks2014_baseline.txt"),
+            "r+b",
+            buffering=0,
+        ) as response_file:
             request_stream = io.BytesIO()
-            rpc_client = json_rpc_client.JsonRpcClient(
-                request_stream, response_file)
+            rpc_client = json_rpc_client.JsonRpcClient(request_stream, response_file)
             rpc_client.start()
             # Submit a dummy request.
             parameters = {
-                u'FilePath': u'Sample_File_Path',
-                u'ConnectionString': u'Sample_connection_string',
-                u'IncludeObjectCriteria': None,
-                u'ExcludeObjectCriteria': None,
-                u'IncludeSchemas': None,
-                u'ExcludeSchemas': None,
-                u'IncludeTypes': None,
-                u'ExcludeTypes': None,
-                u'ScriptingObjects': None,
-                u'ScriptDestination': 'ToSingleFile'}
+                "FilePath": "Sample_File_Path",
+                "ConnectionString": "Sample_connection_string",
+                "IncludeObjectCriteria": None,
+                "ExcludeObjectCriteria": None,
+                "IncludeSchemas": None,
+                "ExcludeSchemas": None,
+                "IncludeTypes": None,
+                "ExcludeTypes": None,
+                "ScriptingObjects": None,
+                "ScriptDestination": "ToSingleFile",
+            }
             request = scripting.ScriptingRequest(1, rpc_client, parameters)
 
             self.verify_response_count(
@@ -45,74 +49,79 @@ class ScriptingRequestTests(unittest.TestCase):
                 response_count=1,
                 plan_notification_count=1,
                 progress_count=1736,
-                complete_count=1)
+                complete_count=1,
+            )
 
             rpc_client.shutdown()
 
     def test_scripting_criteria_parameters(self):
         """
-            Verify scripting objects are properly parsed.
+        Verify scripting objects are properly parsed.
         """
-        include_objects = [u'schema1.table1', u'table2']
+        include_objects = ["schema1.table1", "table2"]
         include_criteria = scripting.ScriptingObjects(include_objects)
         include_formatted = include_criteria.format()
 
         scripting_object_1 = include_formatted[0]
         scripting_object_2 = include_formatted[1]
 
-        self.assertEqual(scripting_object_1[u'Schema'], u'schema1')
-        self.assertEqual(scripting_object_1[u'Name'], u'table1')
-        self.assertEqual(scripting_object_1[u'Type'], None)
+        self.assertEqual(scripting_object_1["Schema"], "schema1")
+        self.assertEqual(scripting_object_1["Name"], "table1")
+        self.assertEqual(scripting_object_1["Type"], None)
 
-        self.assertEqual(scripting_object_2[u'Schema'], None)
-        self.assertEqual(scripting_object_2[u'Name'], u'table2')
-        self.assertEqual(scripting_object_2[u'Type'], None)
+        self.assertEqual(scripting_object_2["Schema"], None)
+        self.assertEqual(scripting_object_2["Name"], "table2")
+        self.assertEqual(scripting_object_2["Type"], None)
 
     def test_scripting_response_decoder(self):
         complete_event = {
-            u'jsonrpc': u'2.0',
-            u'method': u'scripting/scriptComplete',
-            u'params': {
-                u'operationId': u'e18b9538-a7ff-4502-9c33-ac63ed42e5a5',
-                u'sequenceNumber': u'3',
-                u'hasError': u'false',
-                u'errorMessage': u'',
-                u'errorDetails': u'',
-                u'canceled': u'false',
-                u'success': u'true'}}
+            "jsonrpc": "2.0",
+            "method": "scripting/scriptComplete",
+            "params": {
+                "operationId": "e18b9538-a7ff-4502-9c33-ac63ed42e5a5",
+                "sequenceNumber": "3",
+                "hasError": "false",
+                "errorMessage": "",
+                "errorDetails": "",
+                "canceled": "false",
+                "success": "true",
+            },
+        }
 
         progress_notification = {
-            u'jsonrpc': u'2.0',
-            u'method': u'scripting/scriptProgressNotification',
-            u'params': {
-                u'operationId': u'e18b9538-a7ff-4502-9c33-ac63ed42e5a5',
-                u'sequenceNumber': u'2',
-                u'status': u'Completed',
-                u'completedCount': 3,
-                u'totalCount': 12,
-                u'scriptingObject': {
-                    u'type': u'FullTextCatalog',
-                    u'schema': u'null',
-                    u'name': u'SampleFullTextCatalog'}}}
+            "jsonrpc": "2.0",
+            "method": "scripting/scriptProgressNotification",
+            "params": {
+                "operationId": "e18b9538-a7ff-4502-9c33-ac63ed42e5a5",
+                "sequenceNumber": "2",
+                "status": "Completed",
+                "completedCount": 3,
+                "totalCount": 12,
+                "scriptingObject": {
+                    "type": "FullTextCatalog",
+                    "schema": "null",
+                    "name": "SampleFullTextCatalog",
+                },
+            },
+        }
 
         plan_notification = {
-            u'jsonrpc': u'2.0',
-            u'method': u'scripting/scriptPlanNotification',
-            u'params': {
-                u'operationId': u'e18b9538-a7ff-4502-9c33-ac63ed42e5a5',
-                u'sequenceNumber': u'1',
-                u'scriptingObjects': [
-                    {
-                        u'type': u'Database',
-                        u'schema': u'null',
-                        u'name': u'AdventureWorks2014'}],
-                u'count': 10}}
+            "jsonrpc": "2.0",
+            "method": "scripting/scriptPlanNotification",
+            "params": {
+                "operationId": "e18b9538-a7ff-4502-9c33-ac63ed42e5a5",
+                "sequenceNumber": "1",
+                "scriptingObjects": [
+                    {"type": "Database", "schema": "null", "name": "AdventureWorks2014"}
+                ],
+                "count": 10,
+            },
+        }
 
         decoder = scripting.ScriptingResponseDecoder()
 
         complete_decoded = decoder.decode_response(complete_event)
-        progress_notification_decoded = decoder.decode_response(
-            progress_notification)
+        progress_notification_decoded = decoder.decode_response(progress_notification)
         plan_notification_decoded = decoder.decode_response(plan_notification)
 
         self.assertIsNotNone(complete_decoded)
@@ -121,13 +130,13 @@ class ScriptingRequestTests(unittest.TestCase):
 
     def test_scripting_response_decoder_invalid(self):
         """
-            Verify decode invalid response.
+        Verify decode invalid response.
         """
         complete_event = {
-            u'jsonrpc': u'2.0',
-            u'method': u'connect/connectionComplete',
-            u'params': {
-                u'operationId': u'e18b9538-a7ff-4502-9c33-ac63ed42e5a5'}}
+            "jsonrpc": "2.0",
+            "method": "connect/connectionComplete",
+            "params": {"operationId": "e18b9538-a7ff-4502-9c33-ac63ed42e5a5"},
+        }
 
         decoder = scripting.ScriptingResponseDecoder()
 
@@ -138,106 +147,108 @@ class ScriptingRequestTests(unittest.TestCase):
 
     def test_default_script_options(self):
         """
-            Verify default scripting options created.
+        Verify default scripting options created.
         """
         scripting_options = scripting.ScriptingOptions()
         expected = {
-            u'ScriptAnsiPadding': False,
-            u'AppendToFile': False,
-            u'IncludeIfNotExists': False,
-            u'ContinueScriptingOnError': False,
-            u'ConvertUDDTToBaseType': False,
-            u'GenerateScriptForDependentObjects': False,
-            u'IncludeDescriptiveHeaders': False,
-            u'IncludeSystemConstraintNames': False,
-            u'IncludeUnsupportedStatements': False,
-            u'SchemaQualify': False,
-            u'Bindings': False,
-            u'Collation': False,
-            u'Default': False,
-            u'ScriptExtendedProperties': False,
-            u'ScriptLogins': False,
-            u'ScriptObjectLevelPermissions': False,
-            u'ScriptOwner': False,
-            u'ScriptUseDatabase': False,
-            u'ScriptChangeTracking': False,
-            u'ScriptCheckConstraints': False,
-            u'ScriptDataCompressionOptions': False,
-            u'ScriptForeignKeys': False,
-            u'ScriptFullTextIndexes': False,
-            u'ScriptIndexes': False,
-            u'ScriptPrimaryKeys': False,
-            u'ScriptTriggers': False,
-            u'UniqueKeys': False,
-            u'TypeOfDataToScript': u'SchemaOnly',
-            u'ScriptCreateDrop': u'ScriptCreate',
-            u'TargetDatabaseEngineType': u'SingleInstance',
-            u'ScriptStatistics': u'ScriptStatsNone',
-            u'ScriptCompatibilityOption': u'Script140Compat',
-            u'TargetDatabaseEngineEdition': u'SqlServerStandardEdition'}
+            "ScriptAnsiPadding": False,
+            "AppendToFile": False,
+            "IncludeIfNotExists": False,
+            "ContinueScriptingOnError": False,
+            "ConvertUDDTToBaseType": False,
+            "GenerateScriptForDependentObjects": False,
+            "IncludeDescriptiveHeaders": False,
+            "IncludeSystemConstraintNames": False,
+            "IncludeUnsupportedStatements": False,
+            "SchemaQualify": False,
+            "Bindings": False,
+            "Collation": False,
+            "Default": False,
+            "ScriptExtendedProperties": False,
+            "ScriptLogins": False,
+            "ScriptObjectLevelPermissions": False,
+            "ScriptOwner": False,
+            "ScriptUseDatabase": False,
+            "ScriptChangeTracking": False,
+            "ScriptCheckConstraints": False,
+            "ScriptDataCompressionOptions": False,
+            "ScriptForeignKeys": False,
+            "ScriptFullTextIndexes": False,
+            "ScriptIndexes": False,
+            "ScriptPrimaryKeys": False,
+            "ScriptTriggers": False,
+            "UniqueKeys": False,
+            "TypeOfDataToScript": "SchemaOnly",
+            "ScriptCreateDrop": "ScriptCreate",
+            "TargetDatabaseEngineType": "SingleInstance",
+            "ScriptStatistics": "ScriptStatsNone",
+            "ScriptCompatibilityOption": "Script140Compat",
+            "TargetDatabaseEngineEdition": "SqlServerStandardEdition",
+        }
 
         self.assertEqual(scripting_options.get_options(), expected)
 
     def test_nondefault_script_options(self):
         """
-            Verify scripting options updated.
+        Verify scripting options updated.
         """
         new_options = {
-            u'ScriptAnsiPadding': True,
-            u'AppendToFile': True,
-            u'TypeOfDataToScript': u'SchemaOnly',
-            u'ScriptDropAndCreate': u'ScriptCreate',
-            u'ScriptForTheDatabaseEngineType': u'SingleInstance',
-            u'ScriptStatistics': u'ScriptStatsNone',
-            u'ScriptCompatibilityOption': u'Script140Compat',
-            u'TargetDatabaseEngineEdition': u'SqlServerStandardEdition'}
+            "ScriptAnsiPadding": True,
+            "AppendToFile": True,
+            "TypeOfDataToScript": "SchemaOnly",
+            "ScriptDropAndCreate": "ScriptCreate",
+            "ScriptForTheDatabaseEngineType": "SingleInstance",
+            "ScriptStatistics": "ScriptStatsNone",
+            "ScriptCompatibilityOption": "Script140Compat",
+            "TargetDatabaseEngineEdition": "SqlServerStandardEdition",
+        }
         scripting_options = scripting.ScriptingOptions(new_options)
 
         expected = {
-            u'ScriptAnsiPadding': True,
-            u'AppendToFile': True,
-            u'IncludeIfNotExists': False,
-            u'ContinueScriptingOnError': False,
-            u'ConvertUDDTToBaseType': False,
-            u'GenerateScriptForDependentObjects': False,
-            u'IncludeDescriptiveHeaders': False,
-            u'IncludeSystemConstraintNames': False,
-            u'IncludeUnsupportedStatements': False,
-            u'SchemaQualify': False,
-            u'Bindings': False,
-            u'Collation': False,
-            u'Default': False,
-            u'ScriptExtendedProperties': False,
-            u'ScriptLogins': False,
-            u'ScriptObjectLevelPermissions': False,
-            u'ScriptOwner': False,
-            u'ScriptUseDatabase': False,
-            u'ScriptChangeTracking': False,
-            u'ScriptCheckConstraints': False,
-            u'ScriptDataCompressionOptions': False,
-            u'ScriptForeignKeys': False,
-            u'ScriptFullTextIndexes': False,
-            u'ScriptIndexes': False,
-            u'ScriptPrimaryKeys': False,
-            u'ScriptTriggers': False,
-            u'UniqueKeys': False,
-            u'TypeOfDataToScript': u'SchemaOnly',
-            u'ScriptCreateDrop': u'ScriptCreate',
-            u'TargetDatabaseEngineType': u'SingleInstance',
-            u'ScriptStatistics': u'ScriptStatsNone',
-            u'ScriptCompatibilityOption': u'Script140Compat',
-            u'TargetDatabaseEngineEdition': u'SqlServerStandardEdition'}
+            "ScriptAnsiPadding": True,
+            "AppendToFile": True,
+            "IncludeIfNotExists": False,
+            "ContinueScriptingOnError": False,
+            "ConvertUDDTToBaseType": False,
+            "GenerateScriptForDependentObjects": False,
+            "IncludeDescriptiveHeaders": False,
+            "IncludeSystemConstraintNames": False,
+            "IncludeUnsupportedStatements": False,
+            "SchemaQualify": False,
+            "Bindings": False,
+            "Collation": False,
+            "Default": False,
+            "ScriptExtendedProperties": False,
+            "ScriptLogins": False,
+            "ScriptObjectLevelPermissions": False,
+            "ScriptOwner": False,
+            "ScriptUseDatabase": False,
+            "ScriptChangeTracking": False,
+            "ScriptCheckConstraints": False,
+            "ScriptDataCompressionOptions": False,
+            "ScriptForeignKeys": False,
+            "ScriptFullTextIndexes": False,
+            "ScriptIndexes": False,
+            "ScriptPrimaryKeys": False,
+            "ScriptTriggers": False,
+            "UniqueKeys": False,
+            "TypeOfDataToScript": "SchemaOnly",
+            "ScriptCreateDrop": "ScriptCreate",
+            "TargetDatabaseEngineType": "SingleInstance",
+            "ScriptStatistics": "ScriptStatsNone",
+            "ScriptCompatibilityOption": "Script140Compat",
+            "TargetDatabaseEngineEdition": "SqlServerStandardEdition",
+        }
 
         self.assertEqual(scripting_options.get_options(), expected)
 
     def test_invalid_script_options(self):
         """
-            Verify invalid script options.
+        Verify invalid script options.
         """
-        invalid_options = {u'ScriptAnsiPadding': u'NonValid'}
+        invalid_options = {"ScriptAnsiPadding": "NonValid"}
 
-        invalid_server_version = {
-            u'ScriptCompatibilityOption': u'SQL Server 1689'}
+        invalid_server_version = {"ScriptCompatibilityOption": "SQL Server 1689"}
 
         with self.assertRaises(ValueError):
             scripting.ScriptingOptions(invalid_options)
@@ -246,79 +257,78 @@ class ScriptingRequestTests(unittest.TestCase):
 
     def test_script_database_params_format(self):
         """
-            Verify scripting parameters format.
+        Verify scripting parameters format.
         """
         params = {
-            u'FilePath': u'C:\temp\sample_db.sql',
-            u'ConnectionString': u'Sample_connection_string',
-            u'IncludeObjectCriteria': [],
-            u'ExcludeObjectCriteria': [],
-            u'IncludeSchemas': None,
-            u'ExcludeSchemas': None,
-            u'IncludeTypes': None,
-            u'ExcludeTypes': None,
-            u'ScriptingObjects': [u'Person.Person'],
-            u'ScriptDestination': 'ToSingleFile'}
+            "FilePath": "C:\\temp\\sample_db.sql",
+            "ConnectionString": "Sample_connection_string",
+            "IncludeObjectCriteria": [],
+            "ExcludeObjectCriteria": [],
+            "IncludeSchemas": None,
+            "ExcludeSchemas": None,
+            "IncludeTypes": None,
+            "ExcludeTypes": None,
+            "ScriptingObjects": ["Person.Person"],
+            "ScriptDestination": "ToSingleFile",
+        }
         scripting_params = scripting.ScriptingParams(params)
 
         formatted_params = scripting_params.format()
         expected_script_options = {
-            u'ScriptAnsiPadding': False,
-            u'AppendToFile': False,
-            u'IncludeIfNotExists': False,
-            u'ContinueScriptingOnError': False,
-            u'ConvertUDDTToBaseType': False,
-            u'GenerateScriptForDependentObjects': False,
-            u'IncludeDescriptiveHeaders': False,
-            u'IncludeSystemConstraintNames': False,
-            u'IncludeUnsupportedStatements': False,
-            u'SchemaQualify': False,
-            u'Bindings': False,
-            u'Collation': False,
-            u'Default': False,
-            u'ScriptExtendedProperties': False,
-            u'ScriptLogins': False,
-            u'ScriptObjectLevelPermissions': False,
-            u'ScriptOwner': False,
-            u'ScriptUseDatabase': False,
-            u'ScriptChangeTracking': False,
-            u'ScriptCheckConstraints': False,
-            u'ScriptDataCompressionOptions': False,
-            u'ScriptForeignKeys': False,
-            u'ScriptFullTextIndexes': False,
-            u'ScriptIndexes': False,
-            u'ScriptPrimaryKeys': False,
-            u'ScriptTriggers': False,
-            u'UniqueKeys': False,
-            u'TypeOfDataToScript': u'SchemaOnly',
-            u'ScriptCreateDrop': u'ScriptCreate',
-            u'TargetDatabaseEngineType': u'SingleInstance',
-            u'ScriptStatistics': u'ScriptStatsNone',
-            u'ScriptCompatibilityOption': u'Script140Compat',
-            u'TargetDatabaseEngineEdition': u'SqlServerStandardEdition'}
+            "ScriptAnsiPadding": False,
+            "AppendToFile": False,
+            "IncludeIfNotExists": False,
+            "ContinueScriptingOnError": False,
+            "ConvertUDDTToBaseType": False,
+            "GenerateScriptForDependentObjects": False,
+            "IncludeDescriptiveHeaders": False,
+            "IncludeSystemConstraintNames": False,
+            "IncludeUnsupportedStatements": False,
+            "SchemaQualify": False,
+            "Bindings": False,
+            "Collation": False,
+            "Default": False,
+            "ScriptExtendedProperties": False,
+            "ScriptLogins": False,
+            "ScriptObjectLevelPermissions": False,
+            "ScriptOwner": False,
+            "ScriptUseDatabase": False,
+            "ScriptChangeTracking": False,
+            "ScriptCheckConstraints": False,
+            "ScriptDataCompressionOptions": False,
+            "ScriptForeignKeys": False,
+            "ScriptFullTextIndexes": False,
+            "ScriptIndexes": False,
+            "ScriptPrimaryKeys": False,
+            "ScriptTriggers": False,
+            "UniqueKeys": False,
+            "TypeOfDataToScript": "SchemaOnly",
+            "ScriptCreateDrop": "ScriptCreate",
+            "TargetDatabaseEngineType": "SingleInstance",
+            "ScriptStatistics": "ScriptStatsNone",
+            "ScriptCompatibilityOption": "Script140Compat",
+            "TargetDatabaseEngineEdition": "SqlServerStandardEdition",
+        }
 
+        self.assertEqual(formatted_params["FilePath"], "C:\\temp\\sample_db.sql")
         self.assertEqual(
-            formatted_params[u'FilePath'],
-            u'C:\temp\sample_db.sql')
-        self.assertEqual(
-            formatted_params[u'ConnectionString'],
-            u'Sample_connection_string')
+            formatted_params["ConnectionString"], "Sample_connection_string"
+        )
         # Reenable assertion below when the option is supported.
         # self.assertEqual(formatted_params['DatabaseObjects'], ['Person.Person'])
-        self.assertEqual(
-            formatted_params[u'ScriptOptions'],
-            expected_script_options)
+        self.assertEqual(formatted_params["ScriptOptions"], expected_script_options)
 
     def verify_response_count(
-            self,
-            request,
-            response_count,
-            plan_notification_count,
-            progress_count,
-            complete_count,
-            func=None):
+        self,
+        request,
+        response_count,
+        plan_notification_count,
+        progress_count,
+        complete_count,
+        func=None,
+    ):
         """
-            Helper to verify expected response count from a request.
+        Helper to verify expected response count from a request.
         """
         progress_notification_event = 0
         complete_event = 0
@@ -354,37 +364,40 @@ class ScriptingRequestTests(unittest.TestCase):
     # Helper to generate a baseline for AdventureWorks
     #
     def generate_new_baseline(self, file_name):
-            """
-                Helper function to generate new baselines for scripting request test.
-            """
-            import subprocess
-            import time
-            # Point sqltoolsservice output to file.
-            with io.open(file_name, 'wb') as baseline:
-                tools_service_process = subprocess.Popen(
-                    'D:\\GitHub\\sqltoolsservice\\src\\Microsoft.SqlTools.ServiceLayer\\bin\\Debug\\netcoreapp2.0\\win7-x64\\MicrosoftSqlToolsServiceLayer.exe',
-                    bufsize=0,
-                    stdin=subprocess.PIPE,
-                    stdout=baseline)
+        """
+        Helper function to generate new baselines for scripting request test.
+        """
+        import subprocess
+        import time
 
-                # Update these parameters in order to user function.
-                parameters = {
-                    u'FilePath': u'D:\\Temp\\adventureworks2014.temp.sql',
-                    u'ConnectionString': u'server=bro-hb;database=AdventureWorks2014;Integrated Security=true',
-                    u'IncludeObjectCriteria': None,
-                    u'ExcludeObjectCriteria': None,
-                    u'IncludeSchemas': None,
-                    u'ExcludeSchemas': None,
-                    u'IncludeTypes': None,
-                    u'ExcludeTypes': None,
-                    u'ScriptingObjects': None}
+        # Point sqltoolsservice output to file.
+        with io.open(file_name, "wb") as baseline:
+            tools_service_process = subprocess.Popen(
+                "D:\\GitHub\\sqltoolsservice\\src\\Microsoft.SqlTools.ServiceLayer\\bin\\Debug\\netcoreapp2.0\\win7-x64\\MicrosoftSqlToolsServiceLayer.exe",
+                bufsize=0,
+                stdin=subprocess.PIPE,
+                stdout=baseline,
+            )
 
-                writer = json_rpc_client.JsonRpcWriter(tools_service_process.stdin)
-                writer.send_request('scripting/script', parameters, id=1)
-                # submit raw request.
-                time.sleep(30)
+            # Update these parameters in order to user function.
+            parameters = {
+                "FilePath": "D:\\Temp\\adventureworks2014.temp.sql",
+                "ConnectionString": "server=bro-hb;database=AdventureWorks2014;Integrated Security=true",
+                "IncludeObjectCriteria": None,
+                "ExcludeObjectCriteria": None,
+                "IncludeSchemas": None,
+                "ExcludeSchemas": None,
+                "IncludeTypes": None,
+                "ExcludeTypes": None,
+                "ScriptingObjects": None,
+            }
 
-                tools_service_process.kill()
+            writer = json_rpc_client.JsonRpcWriter(tools_service_process.stdin)
+            writer.send_request("scripting/script", parameters, id=1)
+            # submit raw request.
+            time.sleep(30)
+
+            tools_service_process.kill()
 
     # Uncomment to generate a baseline for AdventureWorks
     #
@@ -393,15 +406,14 @@ class ScriptingRequestTests(unittest.TestCase):
 
     def get_test_baseline(self, file_name):
         """
-            Helper method to get baseline file.
+        Helper method to get baseline file.
         """
         return os.path.abspath(
             os.path.join(
-                os.path.abspath(__file__),
-                u'..',
-                u'scripting_baselines',
-                file_name))
+                os.path.abspath(__file__), "..", "scripting_baselines", file_name
+            )
+        )
 
 
-if __name__ == u'__main__':
+if __name__ == "__main__":
     unittest.main()

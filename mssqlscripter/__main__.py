@@ -14,7 +14,7 @@ try:
 except EnvironmentError as error:
     sys.stderr.write(str(error))
     sys.exit(1)
-except KeyboardInterrupt as error:
+except KeyboardInterrupt:
     sys.exit(2)
 except Exception as error:
     sys.stderr.write(str(error))

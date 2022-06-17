@@ -5,26 +5,26 @@
 
 import io
 import threading
-import unittest
-import mssqlscripter.sqltoolsclient as sql_tools_client
 import time
+import unittest
+
+import mssqlscripter.sqltoolsclient as sql_tools_client
 
 
 class SqlToolsClientTest(unittest.TestCase):
     """
-        SQL Tools Client tests.
+    SQL Tools Client tests.
     """
 
     def test_sql_tools_client_initialization(self):
         """
-            Verify sql tools client initialization.
+        Verify sql tools client initialization.
         """
         input_stream = io.BytesIO()
         output_stream = io.BytesIO()
 
         # Start the tools client
-        tools_client = sql_tools_client.SqlToolsClient(
-            input_stream, output_stream)
+        tools_client = sql_tools_client.SqlToolsClient(input_stream, output_stream)
 
         # verify background threads are alive.
         # Until we have a dummy process that blocks on the output_stream, the
@@ -34,12 +34,12 @@ class SqlToolsClientTest(unittest.TestCase):
 
         # Create a scripting request with sample parameters.
         parameters = {
-            u'FilePath': u'Sample_File_Path',
-            u'ConnectionString': u'Sample_connection_string',
-            u'ScriptingObjects': None,
-            u'ScriptDestination': 'ToSingleFile'}
-        request = tools_client.create_request(
-            u'scripting_request', parameters)
+            "FilePath": "Sample_File_Path",
+            "ConnectionString": "Sample_connection_string",
+            "ScriptingObjects": None,
+            "ScriptDestination": "ToSingleFile",
+        }
+        request = tools_client.create_request("scripting_request", parameters)
 
         # Assert request is scripting request and hasn't started.
         self.assertIsNotNone(request)
@@ -53,5 +53,5 @@ class SqlToolsClientTest(unittest.TestCase):
         self.assertFalse(tools_client.json_rpc_client.response_thread.is_alive())
 
 
-if __name__ == u'__main__':
+if __name__ == "__main__":
     unittest.main()

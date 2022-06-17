@@ -1,18 +1,3 @@
-.. image:: https://travis-ci.org/Microsoft/mssql-scripter.svg?branch=dev
-    :target: https://travis-ci.org/Microsoft/mssql-scripter
-
-.. image:: https://ci.appveyor.com/api/projects/status/vpm8p71265ijytqs/branch/dev?svg=true
-    :target: https://ci.appveyor.com/project/MrMeemus/mssql-scripter
-
-.. image:: https://codecov.io/gh/Microsoft/mssql-scripter/branch/dev/graph/badge.svg?token=M96uWrHOIu
-    :target: https://codecov.io/gh/Microsoft/mssql-scripter/branch/dev
-
-.. image:: https://badge.fury.io/py/mssql-scripter.svg
-    :target: https://pypi.python.org/pypi/mssql-scripter
-
-.. image:: https://img.shields.io/pypi/pyversions/mssql-scripter.svg
-    :target: https://travis-ci.org/Microsoft/mssql-scripter
-
 mssql-scripter
 ===============
 We’re excited to introduce mssql-scripter, a multi-platform command line

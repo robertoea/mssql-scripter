@@ -13,30 +13,31 @@ import sys
 import tempfile
 import time
 
-
-import mssqlscripter.scripterlogging as scripterlogging
 import mssqlscripter.argparser as parser
-import mssqlscripter.scriptercallbacks as scriptercallbacks
-import mssqlscripter.sqltoolsclient as sqltoolsclient
 import mssqlscripter.mssqltoolsservice as mssqltoolsservice
+import mssqlscripter.scriptercallbacks as scriptercallbacks
+import mssqlscripter.scripterlogging as scripterlogging
+import mssqlscripter.sqltoolsclient as sqltoolsclient
 
-logger = logging.getLogger(u'mssqlscripter.main')
+logger = logging.getLogger("mssqlscripter.main")
 
 
 def main(args):
     """
-        Main entry point to mssql-scripter.
+    Main entry point to mssql-scripter.
     """
     scripterlogging.initialize_logger()
-    logger.info('Python Information :{}'.format(sys.version_info))
-    logger.info('System Information: system={} architecture={} version={}'.format(platform.system(), platform.architecture()[0], platform.version()))
+    logger.info(f"Python Information :{sys.version_info}")
+    logger.info(
+        f"System Information: system={platform.system()} architecture={platform.architecture()[0]} version={platform.version()}"
+    )
 
     parameters = parser.parse_arguments(args)
     scrubbed_parameters = copy.deepcopy(parameters)
 
     try:
-        scrubbed_parameters.ConnectionString = '*******'
-        scrubbed_parameters.Password = '********'
+        scrubbed_parameters.ConnectionString = "*******"
+        scrubbed_parameters.Password = "********"
     except AttributeError:
         # Password was not given, using integrated auth.
         pass
@@ -45,44 +46,45 @@ def main(args):
 
     temp_file_path = None
 
-    if not parameters.FilePath and parameters.ScriptDestination == 'ToSingleFile':
+    if not parameters.FilePath and parameters.ScriptDestination == "ToSingleFile":
         # Generate and track the temp file.
         temp_file_path = tempfile.NamedTemporaryFile(
-            prefix=u'mssqlscripter_', delete=False).name
+            prefix="mssqlscripter_", delete=False
+        ).name
         parameters.FilePath = temp_file_path
 
     sqltoolsservice_args = [mssqltoolsservice.get_executable_path()]
 
     if parameters.EnableLogging:
-        sqltoolsservice_args.append('--enable-logging')
-        sqltoolsservice_args.append('--log-dir')
+        sqltoolsservice_args.append("--enable-logging")
+        sqltoolsservice_args.append("--log-dir")
         sqltoolsservice_args.append(scripterlogging.get_config_log_dir())
 
-    logger.debug('Loading mssqltoolsservice with arguments {}'.format(sqltoolsservice_args))
+    logger.debug(f"Loading mssqltoolsservice with arguments {sqltoolsservice_args}")
     try:
         # Start mssqltoolsservice program.
         tools_service_process = subprocess.Popen(
             sqltoolsservice_args,
             bufsize=0,
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE)
+            stdout=subprocess.PIPE,
+        )
 
         # Python 2.7 uses the built-in File type when referencing the subprocess.PIPE.
         # This built-in type for that version blocks on readinto() because it attempts to fill buffer.
         # Wrap a FileIO around it to use a different implementation that does not attempt to fill the buffer
         # on readinto().
         std_out_wrapped = io.open(
-            tools_service_process.stdout.fileno(),
-            u'rb',
-            buffering=0,
-            closefd=False)
+            tools_service_process.stdout.fileno(), "rb", buffering=0, closefd=False
+        )
 
         sql_tools_client = sqltoolsclient.SqlToolsClient(
-            tools_service_process.stdin,
-            std_out_wrapped)
+            tools_service_process.stdin, std_out_wrapped
+        )
 
         scripting_request = sql_tools_client.create_request(
-            u'scripting_request', vars(parameters))
+            "scripting_request", vars(parameters)
+        )
         scripting_request.execute()
 
         while not scripting_request.completed():
@@ -94,9 +96,9 @@ def main(args):
                 time.sleep(0.1)
 
         # Only write to stdout if user did not provide a file path.
-        logger.info('stdout current encoding: {}'.format(sys.stdout.encoding))
+        logger.info(f"stdout current encoding: {sys.stdout.encoding}")
         if temp_file_path:
-            with io.open(parameters.FilePath, encoding=u'utf-8') as script_file:
+            with io.open(parameters.FilePath, encoding="utf-8") as script_file:
                 for line in script_file.readlines():
                     sys.stdout.write(line)
 
@@ -107,7 +109,7 @@ def main(args):
         if tools_service_process:
             tools_service_process.kill()
             # 1 second time out, allow tools service process to be killed.
-            time.sleep(.1)
+            time.sleep(0.1)
             # Close the stdout file handle or else we would get a resource warning (found via pytest).
             # This must be closed after the process is killed, otherwise we would block because the process is using
             # it's stdout.
@@ -115,7 +117,8 @@ def main(args):
             # None value indicates process has not terminated.
             if not tools_service_process.poll():
                 sys.stderr.write(
-                    u'Sql Tools Service process was not shut down properly.')
+                    "Sql Tools Service process was not shut down properly."
+                )
         try:
             # Remove the temp file if we generated one.
             if temp_file_path:
@@ -125,5 +128,5 @@ def main(args):
             pass
 
 
-if __name__ == u'__main__':
+if __name__ == "__main__":
     main(sys.argv[1:])

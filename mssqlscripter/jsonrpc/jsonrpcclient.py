@@ -2,24 +2,22 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License. See License.txt in the project root for license information.
 # --------------------------------------------------------------------------------------------
-from __future__ import division
-from queue import Queue
-
 import enum
 import json
 import logging
 import threading
+from queue import Queue
 
-logger = logging.getLogger(u'mssqlscripter.jsonrpc.jsonrpcclient')
+logger = logging.getLogger("mssqlscripter.jsonrpc.jsonrpcclient")
 
 
 class JsonRpcClient(object):
     """
-        Handle async request submission with async response handling.
+    Handle async request submission with async response handling.
     """
 
-    REQUEST_THREAD_NAME = u'Json_Rpc_Request_Thread'
-    RESPONSE_THREAD_NAME = u'Json_Rpc_Response_Thread'
+    REQUEST_THREAD_NAME = "Json_Rpc_Request_Thread"
+    RESPONSE_THREAD_NAME = "Json_Rpc_Response_Thread"
 
     def __init__(self, in_stream, out_stream):
         self.writer = JsonRpcWriter(in_stream)
@@ -34,43 +32,43 @@ class JsonRpcClient(object):
 
     def start(self):
         """
-            Starts the background threads to listen for responses and requests from the underlying
-            streams. Encapsulated into it's own method for future async extensions without threads.
+        Starts the background threads to listen for responses and requests from the underlying
+        streams. Encapsulated into it's own method for future async extensions without threads.
         """
-        logger.debug('Json Rpc client started.')
+        logger.debug("Json Rpc client started.")
         self.request_thread = threading.Thread(
-            target=self._listen_for_request,
-            name=self.REQUEST_THREAD_NAME)
+            target=self._listen_for_request, name=self.REQUEST_THREAD_NAME
+        )
         self.request_thread.daemon = True
         self.request_thread.start()
 
         self.response_thread = threading.Thread(
-            target=self._listen_for_response,
-            name=self.RESPONSE_THREAD_NAME)
+            target=self._listen_for_response, name=self.RESPONSE_THREAD_NAME
+        )
         self.response_thread.daemon = True
         self.response_thread.start()
 
     def submit_request(self, method, params, id=None):
         """
-            Submit json rpc request to input stream.
+        Submit json rpc request to input stream.
         """
-        if (method is None or params is None):
-            raise ValueError(u'Method or Parameter was not found in request')
+        if method is None or params is None:
+            raise ValueError("Method or Parameter was not found in request")
 
-        request = {u'method': method, u'params': params, u'id': id}
+        request = {"method": method, "params": params, "id": id}
         self.request_queue.put(request)
 
     def request_finished(self, id):
         """
-            Remove request id response entry.
+        Remove request id response entry.
         """
         if id in self.response_map:
-            logger.debug('Request with id: {} has completed.'.format(id))
+            logger.debug(f"Request with id: {id} has completed.")
             del self.response_map[id]
 
     def get_response(self, id=0):
         """
-            Get latest response. Priority order: Response, Event, Exception.
+        Get latest response. Priority order: Response, Event, Exception.
         """
         if id in self.response_map:
             if not self.response_map[id].empty():
@@ -86,7 +84,7 @@ class JsonRpcClient(object):
 
     def _listen_for_request(self):
         """
-            Submit request if available.
+        Submit request if available.
         """
         while not self.cancel:
             try:
@@ -95,9 +93,10 @@ class JsonRpcClient(object):
 
                 if request:
                     self.writer.send_request(
-                        method=request[u'method'],
-                        params=request[u'params'],
-                        id=request[u'id'])
+                        method=request["method"],
+                        params=request["params"],
+                        id=request["id"],
+                    )
 
             except ValueError as error:
                 # Stream is closed, break out of the loop.
@@ -110,19 +109,19 @@ class JsonRpcClient(object):
 
     def _listen_for_response(self):
         """
-            Listen for and store response, event or exception for main thread to access.
-            Exceptions:
-                ValueError
-                    The stream was closed. Exit the thread immediately.
-                LookupError
-                    No valid header with content-length was found.
-                EOFError
-                    The stream may not contain any bytes yet, so retry.
+        Listen for and store response, event or exception for main thread to access.
+        Exceptions:
+            ValueError
+                The stream was closed. Exit the thread immediately.
+            LookupError
+                No valid header with content-length was found.
+            EOFError
+                The stream may not contain any bytes yet, so retry.
         """
         while not self.cancel:
             try:
                 response = self.reader.read_response()
-                response_id_str = response.get(u'id')
+                response_id_str = response.get("id")
                 if response_id_str:
                     response_id = int(response_id_str)
                     # we have a id, map it with a new queue if it doesn't
@@ -154,16 +153,14 @@ class JsonRpcClient(object):
 
     def _record_exception(self, ex, thread_name):
         """
-            Record exception to allow main thread to access.
+        Record exception to allow main thread to access.
         """
-        logger.debug(
-            u'Thread: {} encountered exception {}'.format(
-                thread_name, ex))
+        logger.debug(f"Thread: {thread_name} encountered exception {ex}")
         self.exception_queue.put(ex)
 
     def shutdown(self):
         """
-            Signal request thread to close as soon as it can.
+        Signal request thread to close as soon as it can.
         """
         self.cancel = True
         # Enqueue None to optimistically unblock background threads so
@@ -175,7 +172,7 @@ class JsonRpcClient(object):
 
         # close the underlying writer.
         self.writer.close()
-        logger.info('Shutting down Json rpc client.')
+        logger.info("Shutting down Json rpc client.")
 
 
 class ReadState(enum.Enum):
@@ -185,13 +182,14 @@ class ReadState(enum.Enum):
 
 class JsonRpcWriter(object):
     """
-        Write JSON RPC message to input stream.
+    Write JSON RPC message to input stream.
     """
-    HEADER = u'Content-Length: {0}\r\n\r\n'
+
+    HEADER = "Content-Length: {0}\r\n\r\n"
 
     def __init__(self, stream, encoding=None):
         self.stream = stream
-        self.encoding = encoding or u'UTF-8'
+        self.encoding = encoding or "UTF-8"
 
     def send_request(self, method, params, id=None):
         """
@@ -201,27 +199,22 @@ class JsonRpcWriter(object):
                 If the stream was closed externally.
         """
         # Perhaps move to a different def to add some validation
-        content_body = {
-            u'jsonrpc': u'2.0',
-            u'method': method,
-            u'params': params,
-            u'id': id
-        }
+        content_body = {"jsonrpc": "2.0", "method": method, "params": params, "id": id}
 
         json_content = json.dumps(content_body, sort_keys=True)
         header = self.HEADER.format(str(len(json_content)))
         try:
-            self.stream.write(header.encode(u'ascii'))
+            self.stream.write(header.encode("ascii"))
             self.stream.write(json_content.encode(self.encoding))
             self.stream.flush()
 
         except ValueError as ex:
-            logger.debug(u'Send Request encountered exception {}'.format(ex))
+            logger.debug(f"Send Request encountered exception {ex}")
             raise
 
     def close(self):
         """
-            Close the stream.
+        Close the stream.
         """
         try:
             self.stream.close()
@@ -231,8 +224,9 @@ class JsonRpcWriter(object):
 
 class JsonRpcReader(object):
     """
-        Read JSON RPC message from output stream.
+    Read JSON RPC message from output stream.
     """
+
     # \r\n
     CR = 13
     LF = 10
@@ -240,7 +234,7 @@ class JsonRpcReader(object):
     DEFAULT_BUFFER_SIZE = 8192
 
     def __init__(self, stream, encoding=None):
-        self.encoding = encoding or u'UTF-8'
+        self.encoding = encoding or "UTF-8"
 
         self.stream = stream
         self.buffer = bytearray(self.DEFAULT_BUFFER_SIZE)
@@ -262,9 +256,9 @@ class JsonRpcReader(object):
         """
         # Using a mutable list to hold the value since a immutable string
         # passed by reference won't change the value.
-        content = ['']
+        content = [""]
         try:
-            while (not self.needs_more_data or self.read_next_chunk()):
+            while not self.needs_more_data or self.read_next_chunk():
                 # We should have all the data we need to form a message in the buffer.
                 # If we need more data to form the next message, this flag will
                 # be reset by a attempt to form a header or content.
@@ -276,7 +270,8 @@ class JsonRpcReader(object):
                 # If we read the header, try the content. If that fails, read
                 # the next chunk.
                 if self.read_state is ReadState.Content and not self.try_read_content(
-                        content):
+                    content
+                ):
                     self.needs_more_data = True
                     continue
                 # We have the  content
@@ -288,7 +283,8 @@ class JsonRpcReader(object):
         except ValueError as ex:
             # response has invalid json object.
             logger.debug(
-                u'JSON RPC Reader on read_response() encountered exception: {}'.format(ex))
+                f"JSON RPC Reader on read_response() encountered exception: {ex}"
+            )
             raise
 
     def read_next_chunk(self):
@@ -302,8 +298,9 @@ class JsonRpcReader(object):
         """
         # Check if we need to resize.
         current_buffer_size = len(self.buffer)
-        if ((current_buffer_size - self.buffer_end_offset) /
-                current_buffer_size) < self.BUFFER_RESIZE_TRIGGER:
+        if (
+            (current_buffer_size - self.buffer_end_offset) / current_buffer_size
+        ) < self.BUFFER_RESIZE_TRIGGER:
             resized_buffer = bytearray(current_buffer_size * 2)
             # copy current buffer content to new buffer.
             resized_buffer[0:current_buffer_size] = self.buffer
@@ -314,17 +311,19 @@ class JsonRpcReader(object):
         # array
         try:
             length_read = self.stream.readinto(
-                memoryview(self.buffer)[self.buffer_end_offset:])
+                memoryview(self.buffer)[self.buffer_end_offset :]
+            )
             self.buffer_end_offset += length_read
 
             if not length_read:
-                logger.debug(u'JSON RPC Reader reached end of stream')
-                raise EOFError(u'End of stream reached, no output.')
+                logger.debug("JSON RPC Reader reached end of stream")
+                raise EOFError("End of stream reached, no output.")
 
             return True
         except ValueError as ex:
             logger.debug(
-                u'JSON RPC Reader on read_next_chunk encountered exception: {}'.format(ex))
+                f"JSON RPC Reader on read_next_chunk encountered exception: {ex}"
+            )
             # Stream was closed.
             raise
 
@@ -339,11 +338,12 @@ class JsonRpcReader(object):
         """
         # Scan the buffer up until right before the CRLFCRLF.
         scan_offset = self.read_offset
-        while (scan_offset + 3 < self.buffer_end_offset and
-                (self.buffer[scan_offset] != self.CR or
-                 self.buffer[scan_offset + 1] != self.LF or
-                 self.buffer[scan_offset + 2] != self.CR or
-                 self.buffer[scan_offset + 3] != self.LF)):
+        while scan_offset + 3 < self.buffer_end_offset and (
+            self.buffer[scan_offset] != self.CR
+            or self.buffer[scan_offset + 1] != self.LF
+            or self.buffer[scan_offset + 2] != self.CR
+            or self.buffer[scan_offset + 3] != self.LF
+        ):
             scan_offset += 1
 
         # if we reached the end
@@ -352,31 +352,30 @@ class JsonRpcReader(object):
 
         # Split the headers by new line
         try:
-            headers_read = self.buffer[self.read_offset:scan_offset].decode(
-                u'ascii')
-            for header in headers_read.split(u'\n'):
-                colon_index = header.find(u':')
+            headers_read = self.buffer[self.read_offset : scan_offset].decode("ascii")
+            for header in headers_read.split("\n"):
+                colon_index = header.find(":")
 
                 if colon_index == -1:
                     logger.debug(
-                        u'JSON RPC Reader encountered missing colons in try_read_headers()')
-                    raise KeyError(
-                        u'Colon missing from Header: {}.'.format(header))
+                        "JSON RPC Reader encountered missing colons in try_read_headers()"
+                    )
+                    raise KeyError(f"Colon missing from Header: {header}.")
 
                 # Case insensitive.
                 header_key = header[:colon_index].lower()
-                header_value = header[colon_index + 1:]
+                header_value = header[colon_index + 1 :]
 
                 self.headers[header_key] = header_value
 
             # Was content-length header found?
-            if not ('content-length' in self.headers):
+            if not ("content-length" in self.headers):
                 logger.debug(
-                    u'JSON RPC Reader did not find Content-Length in the headers')
-                raise LookupError(
-                    u'Content-Length was not found in headers received.')
+                    "JSON RPC Reader did not find Content-Length in the headers"
+                )
+                raise LookupError("Content-Length was not found in headers received.")
 
-            self.expected_content_length = int(self.headers[u'content-length'])
+            self.expected_content_length = int(self.headers["content-length"])
 
         except ValueError:
             # Content-length contained invalid literal for int.
@@ -391,15 +390,15 @@ class JsonRpcReader(object):
 
     def try_read_content(self, content):
         """
-            Try to read content from internal buffer.
+        Try to read content from internal buffer.
         """
-        if (self.buffer_end_offset - self.read_offset <
-                self.expected_content_length):
+        if self.buffer_end_offset - self.read_offset < self.expected_content_length:
             # We buffered less than the expected content length.
             return False
 
-        content[0] = self.buffer[self.read_offset:self.read_offset +
-                                 self.expected_content_length].decode(self.encoding)
+        content[0] = self.buffer[
+            self.read_offset : self.read_offset + self.expected_content_length
+        ].decode(self.encoding)
         self.read_offset += self.expected_content_length
 
         self.read_state = ReadState.Header
@@ -412,14 +411,16 @@ class JsonRpcReader(object):
         """
         current_buffer_size = len(self.buffer)
         # Create a new buffer with either minumum size or leftover size.
-        new_buffer = bytearray(max(current_buffer_size -
-                                   bytes_to_remove, self.DEFAULT_BUFFER_SIZE))
+        new_buffer = bytearray(
+            max(current_buffer_size - bytes_to_remove, self.DEFAULT_BUFFER_SIZE)
+        )
 
         # if we have content we did not read, copy that portion to the new
         # buffer.
-        if (bytes_to_remove <= current_buffer_size):
-            new_buffer[:self.buffer_end_offset -
-                       bytes_to_remove] = self.buffer[bytes_to_remove:self.buffer_end_offset]
+        if bytes_to_remove <= current_buffer_size:
+            new_buffer[: self.buffer_end_offset - bytes_to_remove] = self.buffer[
+                bytes_to_remove : self.buffer_end_offset
+            ]
 
         # Point to the new buffer.
         self.buffer = new_buffer
@@ -430,7 +431,7 @@ class JsonRpcReader(object):
 
     def close(self):
         """
-            Close the stream.
+        Close the stream.
         """
         try:
             self.stream.close()

@@ -4,30 +4,31 @@
 # --------------------------------------------------------------------------------------------
 import abc
 
-ABC = abc.ABCMeta('ABC', (object,), {})  # compatibile with Python 2 *and* 3.
+ABC = abc.ABCMeta("ABC", (object,), {})  # compatibile with Python 2 *and* 3.
 
 
 class Request(ABC):
     """
-        Abstract request class.
+    Abstract request class.
     """
+
     @abc.abstractmethod
     def execute(self):
         """
-            Executes the request.
+        Executes the request.
         """
         pass
 
     @abc.abstractmethod
     def get_response(self):
         """
-            Retrieves expected response.
+        Retrieves expected response.
         """
         pass
 
     @abc.abstractmethod
     def completed(self):
         """
-            Return state of request.
+        Return state of request.
         """
         pass

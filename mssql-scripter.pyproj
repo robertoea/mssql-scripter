@@ -14,6 +14,7 @@
     <CommandLineArguments>-S localhost -d AdventureWorks2014</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
     <IsWindowsApplication>False</IsWindowsApplication>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
@@ -24,7 +25,6 @@
     <Content Include=".gitignore" />
     <Content Include="appveyor.yml" />
     <Content Include="dev_requirements.txt" />
-    <Content Include="doc\README.md" />
     <Content Include="doc\architecture_guide.md" />
     <Content Include="doc\development_guide.md" />
     <Content Include="doc\pypi_release_steps.md" />
@@ -37,15 +37,10 @@
     <Content Include="mssql-scripter.bat" />
     <Content Include="mssqlscripter\jsonrpc\contracts\tests\scripting_baselines\adventureworks2014_baseline.txt" />
     <Content Include="mssqlscripter\jsonrpc\README.md" />
-    <Content Include="mssqltoolsservice\LICENSE.txt" />
-    <Content Include="mssqltoolsservice\MANIFEST.in" />
-    <Content Include="mssqltoolsservice\README.rst" />
-    <Content Include="mssqltoolsservice\setup.cfg" />
     <Content Include="README.rst" />
     <Content Include="setup.cfg" />
     <Content Include="tox.ini" />
     <Content Include=".bumpversion.cfg" />
-    <Content Include=".travis.yml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="build.py" />
@@ -81,6 +76,17 @@
     <Folder Include="mssqlscripter\jsonrpc\tests" />
     <Folder Include="mssqlscripter\tests" />
     <Folder Include="mssqlscripter\mssqltoolsservice\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="env\">
+      <Id>env</Id>
+      <Version>3.10</Version>
+      <Description>env (Python 3.10 (64-bit))</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
